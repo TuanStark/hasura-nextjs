@@ -1,0 +1,50 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    networks:
+      - action_login
+
+  graphql-engine:
+    image: hasura/graphql-engine:v2.43.0
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+      PG_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      HASURA_GRAPHQL_ADMIN_SECRET: 123456789
+      HASURA_GRAPHQL_JWT_SECRET: '{ "type": "HS256", "key": "oursupersecretsupersecurekey1234567890" }'
+    depends_on:
+      - postgres
+    networks:
+      - action_login
+  # action-login:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: action-login
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     HASURA_GRAPHQL_API_ENDPOINT: http://graphql-engine:8080/v1/graphql
+  #   networks:
+  #     - action_login
+
+volumes:
+  db_data:
+
+
+networks:
+  action_login:
+    driver: bridge
